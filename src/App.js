@@ -1,16 +1,18 @@
 // App.js
-import db from './firebaseconfig';
-import { collection, addDoc } from "firebase/firestore";
-import React, { useState, useEffect } from 'react';
-import './App.css';
+import db from "./firebaseconfig";
+import { collection, addDoc, getDocs } from "firebase/firestore";
+import React, { useState, useEffect } from "react";
+import "./App.css";
 
 const App = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [age, setAge] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [age, setAge] = useState("");
+  const [users, setUsers] = useState([]); // State to hold user data
 
   useEffect(() => {
-    document.title = 'Firebase CRUD Application'; // Set browser tab title
+    document.title = "Firebase CRUD Application"; // Set browser tab title
+    fetchUsers(); // Fetch users on component mount
   }, []);
 
   const handleNameChange = (e) => setName(e.target.value);
@@ -26,17 +28,32 @@ const App = () => {
         age: age,
       });
       alert("Data added successfully!");
-      setName('');
-      setEmail('');
-      setAge('');
+      setName("");
+      setEmail("");
+      setAge("");
+      fetchUsers(); // Refresh user list after adding
     } catch (error) {
       console.error("Error adding document: ", error);
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      const userList = [];
+      querySnapshot.forEach((doc) => {
+        userList.push({ id: doc.id, ...doc.data() }); // Store user data
+      });
+      setUsers(userList);
+    } catch (error) {
+      console.error("Error fetching documents: ", error);
+    }
+  };
+
   return (
     <div className="form-container">
-      <h1 className="form-title">Firebase CRUD Application</h1> {/* Page title */}
+      <h1 className="form-title">Firebase CRUD Application</h1>{" "}
+      {/* Page title */}
       <form onSubmit={handleSubmit} className="form">
         <label className="input-label">
           Name:
@@ -68,8 +85,20 @@ const App = () => {
             required
           />
         </label>
-        <button type="submit" className="submit-button">Add to Collection</button>
+        <button type="submit" className="submit-button">
+          Add to Collection
+        </button>
       </form>
+
+      {/* Display Users */}
+      <h2>User List</h2>
+      <ul className="user-list">
+        {users.map((user) => (
+          <li key={user.id}>
+            Name: {user.name}, Email: {user.email}, Age: {user.age}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
